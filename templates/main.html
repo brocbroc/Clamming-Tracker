@@ -79,7 +79,7 @@
 
     <script src="https://code.jquery.com/jquery-3.6.1.js" charset="utf-8"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
-    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDmGjGvUVNZj6ZtRHDsRvewW7FrV4jDTQ8&callback=initMap"></script>
+    <script async src="https://maps.googleapis.com/maps/api/js?key=[API_KEY]&callback=initMap"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 
     <script>
@@ -126,7 +126,7 @@
 
                         // Creates a new marker for each location
                         for (let i = 0; i < data.length; i++) {
-                            fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${data[i]['latitude']}&lon=${data[i]['longitude']}&appid=a221c349f4eff0f7ce40d2ae8febd942`)
+                            fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${data[i]['latitude']}&lon=${data[i]['longitude']}&appid=[API_Key]`)
                             .then(response => {
                                 return response.json();
                             })
