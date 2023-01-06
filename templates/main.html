@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Clamming Tides</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+    <link rel="stylesheet" href="../static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Clamming World</h1>
+    </div>
+
+    <div class="container section-header">
+        <h5>Enter Date of Clamming Expedition</h5>
+        <div>
+            <select class="form-select" id="year" aria-label="Default select example">
+                <option selected>Year</option>
+                <option value="2023">2023</option>
+            </select>
+            <select class="form-select" id="month" aria-label="Default select example">
+                <option selected>Month</option>
+                <option value="01">January</option>
+                <option value="02">February</option>
+                <option value="03">March</option>
+                <option value="04">April</option>
+                <option value="05">May</option>
+                <option value="06">June</option>
+                <option value="07">July</option>
+                <option value="08">August</option>
+                <option value="09">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+            </select>
+            <select class="form-select" id="day" aria-label="Default select example">
+                <option selected>Day</option>
+                <option value="01">1</option>
+                <option value="02">2</option>
+                <option value="03">3</option>
+                <option value="04">4</option>
+                <option value="05">5</option>
+                <option value="06">6</option>
+                <option value="07">7</option>
+                <option value="08">8</option>
+                <option value="09">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="13">13</option>
+                <option value="14">14</option>
+                <option value="15">15</option>
+                <option value="16">16</option>
+                <option value="17">17</option>
+                <option value="18">18</option>
+                <option value="19">19</option>
+                <option value="20">20</option>
+                <option value="21">21</option>
+                <option value="22">22</option>
+                <option value="23">23</option>
+                <option value="24">24</option>
+                <option value="25">25</option>
+                <option value="26">26</option>
+                <option value="27">27</option>
+                <option value="28">28</option>
+                <option value="29">29</option>
+                <option value="30">30</option>
+                <option value="31">31</option>
+            </select>
+            <button onclick="searchDate()" class="btn btn-secondary">Search</button>
+        </div>
+        <div id="input-error"></div>
+    </div>
+
+    <div class="container section-header">
+        <div id="map"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.1.js" charset="utf-8"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDmGjGvUVNZj6ZtRHDsRvewW7FrV4jDTQ8&callback=initMap"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+    <script>
+        console.log("start");
+        let map;
+        window.initMap = initMap;
+        let markers = [];
+
+        // Creates map and basic marker
+        function initMap() {
+            // console.log("activated");
+
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 8,
+                center: {lat: -25.363, lng: 131.044},
+            });
+        }
+
+        function searchDate() {
+            let year = document.getElementById("year").value;
+            let month = document.getElementById("month").value;
+            let day = document.getElementById("day").value
+            let date = year + "-" + month + "-" + day;
+            console.log(date);
+
+            if (verifyDate(year, month, day) == 0) {
+                fetch(`http://127.0.0.1:81/map?date=${date}`)
+                .then(response => {
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(data);
+
+                    if (data.length > 0) {
+                        // Changes center of map to first location returned
+                        document.getElementById("input-error").innerHTML = "";
+                        map.setCenter(new google.maps.LatLng(data[0]['latitude'], data[0]['longitude']));
+
+                        // Remove old markers
+                        for (let i = 0; i < markers.length; i++) {
+                            markers[i].setMap(null);
+                        }
+                        markers.length = 0;
+
+                        // Creates a new marker for each location
+                        for (let i = 0; i < data.length; i++) {
+                            fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${data[i]['latitude']}&lon=${data[i]['longitude']}&appid=a221c349f4eff0f7ce40d2ae8febd942`)
+                            .then(response => {
+                                return response.json();
+                            })
+                            .then(weather => {
+                                let location = data[i];
+                                let temperature = [];
+                                let time = ["00:00:00", "06:00:00", "12:00:00", "18:00:00"]
+
+                                //Finds weather
+                                for (let j = 0; j < 4; j++) {
+                                    let dt = location['date'] + " " + time[j];
+                                    temperature.push(getTemperature(dt, weather));
+                                }
+
+                                // Creates pop-up when marker is clicked
+                                contentString =
+                                    `<h5>${location['name']}</h5>` +
+                                    `<table class="table">` +
+                                    `<tbody>` +
+                                    `<tr>` +
+                                    `<th scope="row">Time</th>` +
+                                    `<td>${location['times'][0]}</td>` +
+                                    `<td>${location['times'][1]}</td>` +
+                                    `<td>${location['times'][2]}</td>` +
+                                    `<td>${location['times'][3]}</td>` +
+                                    `</tr>` +
+                                    `<tr>` +
+                                    `<th scope="row">Tide</th>` +
+                                    `<td>${location['tides'][0]}</td>` +
+                                    `<td>${location['tides'][1]}</td>` +
+                                    `<td>${location['tides'][2]}</td>` +
+                                    `<td>${location['tides'][3]}</td>` +
+                                    `</tr>` +
+                                    `<tr>` +
+                                    `<th scope="row">Weather</th>` +
+                                    `<td>${temperature[0]}</td>` +
+                                    `<td>${temperature[1]}</td>` +
+                                    `<td>${temperature[2]}</td>` +
+                                    `<td>${temperature[3]}</td>` +
+                                    `</tr>` +
+                                    `</tbody>` +
+                                    `</table>`;
+
+                                let newMarker = new google.maps.Marker({
+                                    position: new google.maps.LatLng(location['latitude'], location['longitude']),
+                                    map,
+                                    title: "Click to show",
+                                });
+                                let newInfo = new google.maps.InfoWindow({
+                                    content: contentString,
+                                    ariaLabel: location['name'],
+                                });
+
+                                newMarker.addListener("click", () => {
+                                    newInfo.open({
+                                        anchor: newMarker,
+                                        map,
+                                    });
+                                });
+                                markers.push(newMarker);
+                            });
+                        }
+                    } else {
+                        console.log("Incorrect input: backend");
+                        document.getElementById("input-error").appendChild(document.createTextNode("Please select a date within one week of today"));
+                    }
+                });
+            } else {
+                console.log("Incorrect input: frontend");
+                document.getElementById("input-error").appendChild(document.createTextNode("Please select a date within one week of today"));
+            }
+        }
+
+        function verifyDate(year, month, day) {
+            let formatDate = new Date(year, month, day);
+            let today = new Date();
+            let formatToday = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
+
+            if (formatDate >= formatToday) {
+                if (formatDate <= formatToday.setDate(formatToday.getDate() + 6)) {
+                    return 0;
+                }
+            }
+
+            return 1;
+        }
+
+        function getTemperature(dt, weather) {
+            for (let t = 0; t < 40; t++) {
+                let current = weather['list'][t];
+                if (dt == current['dt_txt']) {
+                    return Math.round(current['main']['temp'] - 273.15) + "°C";
+                }
+            }
+
+            return "N/A";
+        }
+    </script>
+</body>
+</html>
